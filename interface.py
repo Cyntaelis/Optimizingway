@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_tree_select import tree_select
 #home server -dropdown? or home region
+from univ_tools import get_current_item
 
 @st.cache_resource
 def load_resources():
@@ -77,6 +78,9 @@ def counter():
 def prettify_tree(reci_dict, value_counter):
     retval = {}
     retval["label"] = reci_dict["text"]
+    if "id" in reci_dict:
+        prices = get_current_item(reci_dict["id"])
+        retval["label"] += f" (HQ: {prices[0]}, NQ: {prices[1]})"
     retval["value"] = next(value_counter)
     # retval["showCheckbox"] = "
     if retval["value"] != "0":
