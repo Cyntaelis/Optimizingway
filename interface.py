@@ -10,7 +10,8 @@ def load_resources():
     with open('items.json', 'r') as file:
         item_lookup = json.load(file)
 
-    reverse_item_lookup = {item_lookup[x]["en"].lower():x for x in item_lookup.keys()}
+    #reverse_item_lookup = {item_lookup[x]["en"].lower():x for x in item_lookup.keys()}
+    reverse_item_lookup = {item_lookup[x]["en"]:x for x in item_lookup.keys()}
 
     with open('recipes-ingredient-lookup.json', 'r') as file:
         recipe_lookup = json.load(file)
@@ -25,7 +26,7 @@ item_lookup, reverse_item_lookup, recipe_lookup, reverse_recipe_lookup = load_re
 
 
 #separate out logic later
-def reci_dict(itemID):
+def _recipe_dict(itemID):
     retval = {"id":itemID, "text":item_lookup[str(itemID)]["en"]}
     if not int(itemID) in reverse_recipe_lookup:
         return None
@@ -38,7 +39,7 @@ def reci_dict(itemID):
         ingredient["id"] = x["id"]
         ingredient["text"] = item_lookup[str(x["id"])]["en"]
         ingredient["amount"] = x["amount"]
-        recurs = reci_dict(x["id"])
+        recurs = _recipe_dict(x["id"])
         if recurs is not None:
             if "yields" in recurs:
                 ingredient["yields"] = recurs["yields"]
@@ -47,12 +48,12 @@ def reci_dict(itemID):
     retval["ingredients"] = ingredients
     return retval
 
-def full_reci_dict(search_term):
-    search_term=search_term.lower()
+def full_recipe_dict(search_term):
+    search_term=search_term#.lower()
     itemID = reverse_item_lookup[search_term]
     if not int(itemID) in reverse_recipe_lookup:
         return None
-    return reci_dict(itemID)
+    return _recipe_dict(itemID)
 
 
 options_list = [x for x in reverse_item_lookup.keys() 
@@ -89,21 +90,24 @@ def prettify_tree(reci_dict, value_counter):
         retval["children"] = [prettify_tree(x,value_counter) for x in reci_dict["ingredients"]]
     return retval
 
-item = st.selectbox("Search for Item", options_list)
+
 
 # button = st.button("Barse")
+with st.form(key='my_form'):
+    item = st.selectbox("Search for Item", options_list, None)
+    if item is not None:
 
-if item is not None:
-
-    reci = full_reci_dict(item)
-    ctr = counter()
-    nodes = [prettify_tree(reci, ctr)]
-    # print(nodes)
-    return_select = tree_select(nodes, 
-                                # show_expand_all=True, #hardcode later
-                                checked = [0],
-                                expanded = [x for x in range(int(next(ctr)))], #gather all beforehand
-                                # expand_disabled=True,
-                                no_cascade=True, 
-                                )
+        reci = full_recipe_dict(item)
+        ctr = counter()
+        nodes = [prettify_tree(reci, ctr)]
+        # print(nodes)
+        
+        return_select = tree_select(nodes, 
+                                    # show_expand_all=True, #hardcode later
+                                    checked = [0],
+                                    expanded = [x for x in range(int(next(ctr)))], #gather all beforehand
+                                    expand_disabled=False,
+                                    no_cascade=True, 
+                                    )
+    submit_button = st.form_submit_button(label='Submit')
 
