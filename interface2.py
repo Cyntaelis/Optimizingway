@@ -3,27 +3,34 @@ from streamlit_tree_select import tree_select
 #home server -dropdown? or home region
 from univ_tools import univ_client
 from tree import tree_container
+import xivjson
+from xivjson import *
 
 @st.cache_resource
-def load_resources():
-    import json
+def get_univ_client():
+    return univ_client()
+univ_client = get_univ_client()
 
-    with open('items.json', 'r') as file:
-        item_lookup = json.load(file)
+# def load_resources():
+#     import json
 
-    #reverse_item_lookup = {item_lookup[x]["en"].lower():x for x in item_lookup.keys()}
-    reverse_item_lookup = {item_lookup[x]["en"]:x for x in item_lookup.keys()}
+#     with open('items.json', 'r') as file:
+#         item_lookup = json.load(file)
 
-    with open('recipes-ingredient-lookup.json', 'r') as file:
-        recipe_lookup = json.load(file)
+#     #reverse_item_lookup = {item_lookup[x]["en"].lower():x for x in item_lookup.keys()}
+#     reverse_item_lookup = {item_lookup[x]["en"]:x for x in item_lookup.keys()}
 
-    reverse_recipe_lookup = {recipe_lookup["recipes"][x]["itemId"]:
-                         recipe_lookup["recipes"][x]
-                         for x in recipe_lookup["recipes"].keys()}
+#     with open('recipes-ingredient-lookup.json', 'r') as file:
+#         recipe_lookup = json.load(file)
+
+#     reverse_recipe_lookup = {recipe_lookup["recipes"][x]["itemId"]:
+#                          recipe_lookup["recipes"][x]
+#                          for x in recipe_lookup["recipes"].keys()}
     
-    return item_lookup, reverse_item_lookup, recipe_lookup, reverse_recipe_lookup, univ_client()
+#     return item_lookup, reverse_item_lookup, recipe_lookup, reverse_recipe_lookup, 
+univ_client = get_univ_client()
 
-item_lookup, reverse_item_lookup, recipe_lookup, reverse_recipe_lookup, univ_client = load_resources()
+# item_lookup, reverse_item_lookup, recipe_lookup, reverse_recipe_lookup, univ_client = load_resources()
 
 options_list = [x for x in reverse_item_lookup.keys() 
                 if int(reverse_item_lookup[x]) in reverse_recipe_lookup.keys()]
@@ -46,7 +53,7 @@ with st.form(key='my_form'):
 
         reci = full_recipe_dict(item)
         # ctr = counter()
-        nodes = reci.root.to_dict()
+        nodes = reci.get_serialized_nodes()
         # print(nodes)
         # print(nodes)
 
@@ -61,7 +68,8 @@ if item is not None:
     print("update")
     # try:
     if return_select["checked"] != [0]:
-        shopping_list = "".join([f"{reci.node_mapping[x].item} \n -{reci.node_mapping[x].label}\n" for x in return_select["checked"]])
+        en = "en" #fix later
+        shopping_list = "".join([f"{(item_lookup[str(reci.node_mapping[x].item_id)])[en]} \n -{reci.node_mapping[x].label}\n" for x in return_select["checked"]])
         print(return_select["checked"])  
     # except:
         # print(return_select["checked"])       
