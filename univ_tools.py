@@ -1,5 +1,7 @@
 import requests
+import asyncio
 import xivjson
+import time
 from xivjson import *
 
 region_lookup = servers_lookup
@@ -21,9 +23,28 @@ keylist = keylist = ['lastReviewTime',
 class univ_client:
 
     def __init__(self):
-        self.queue = None
         self.cache = {}
+        self.recent = 0
+        self.last_reset = time.time()
+    #     self.queue = asyncio.Queue()
+    #     self.mutex = False
 
+    # async def enqueue(self, query):
+    #     self.queue.put(query)
+    #     self.queue_consumer()
+
+    # async def queue_consumer(self):
+    #     if self.mutex:
+    #         return
+    #     self.mutex = True
+    #     try:
+    #         while not self.queue.empty():
+    #             pass
+                
+    #     except Exception as e:
+    #         self.mutex = False
+    #         raise e
+        
     def raw_price_query(self, item_id):
         region = REGION_NA
         params = {
@@ -32,6 +53,13 @@ class univ_client:
         'statsWithin': 99999,
         # 'entriesWithin': 77777
         }
+
+        self.recent += 1
+        if self.recent > 15 and (time.time()-self.last_reset) <= 1:
+            time.sleep(1)
+            self.recent = 0
+            self.last_reset = time.time()
+            
         response = requests.get(URL+f"{region}/{item_id}", params=params)
         if response.status_code == 200:
             return response.json()
