@@ -68,7 +68,7 @@ class univ_client:
             # print(response)
             #maybe reenque?
 
-    def price_query(self, item_id, filter_args=None):
+    def price_query(self, item_id, filter_args=None, *args, **kwargs):
     
         if item_id in self.cache:
             results = self.cache[item_id]
@@ -118,4 +118,14 @@ class univ_client:
     def _reduce_results(results):
         return [{k:x[k] for k in keylist} for x in results]
 
+class filter:
+    def __init__(self):
+        self.conditions = {"hq":("accept", True)} #{property/accessor:(operator,value)}
+        self.filter_functions = []
 
+    def apply(self, iterable):
+        return self.__call__(iterable)
+    
+    def __call__(self, iterable):
+        
+        pass

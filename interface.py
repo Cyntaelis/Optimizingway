@@ -3,7 +3,7 @@ import streamlit as st
 from streamlit_tree_select import tree_select
 #home server -dropdown? or home region
 from univ_tools import univ_client
-from tree import make_options_list, full_recipe_tree
+from tree_rewrite import make_options_list, full_recipe_tree
 from item_lists import make_shopping_list
 import xivjson
 from xivjson import *
@@ -57,9 +57,9 @@ with mcol.form(key='tree_opti'):
 
         reci_tree = full_recipe_tree(item, univ_client, quantity)#, hq, crystals)
         # ctr = counter()
-        nodes = reci_tree.get_serialized_nodes()
+        nodes = reci_tree.to_dict()
         # print(nodes)
-        # print(nodes)
+        print(nodes)
 
 
 if item is not None:  

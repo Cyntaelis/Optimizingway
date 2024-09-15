@@ -1,8 +1,6 @@
 import xivjson
 import server_tree
 
-def format_list():
-    pass
 
 def format_node(node):
     # item_name = xivjson.item_lookup[node.item_id]["en"]

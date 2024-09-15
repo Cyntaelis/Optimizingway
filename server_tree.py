@@ -1,13 +1,5 @@
 from xivjson import * 
 import xivjson
-# class server_tree:
-#     def __init__(self, node_list):
-#         keyfuncs = [
-#             lambda node: xivjson.reverse_servers_lookup[node.listing["worldName"]]
-#             lambda node: node.listing["worldName"]
-#             lambda node: node.item_id
-#         ]
-#         return autotree(node_list, keyfuncs)
     
 def make_server_tree(node_list):
         keyfuncs = [
