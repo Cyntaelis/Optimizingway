@@ -1,17 +1,28 @@
 from univ_tools import univ_client
-from xivjson import *#item_lookup, recipe_dict
+from xivjson import * #item_lookup, recipe_dict
+
+def make_options_list():
+    return [x for x in reverse_item_lookup.keys() 
+            if int(reverse_item_lookup[x]) in reverse_recipe_lookup.keys()]
+
+def full_recipe_tree(search_term, univ_client, quantity=1):
+    search_term=search_term#.lower()
+    itemID = reverse_item_lookup[search_term]
+    if not int(itemID) in reverse_recipe_lookup:
+        return None
+    return tree_container(itemID, univ_client, quantity)
 
 class tree_container: 
     #streamlit tree component uses lists of node keys for things
     #this container makes it easier to interface with that 
 
-    def __init__(self,item_id, univ_client):
+    def __init__(self, item_id, univ_client, quantity=1):
         self.item_id = item_id
         self.node_count = 0
         self.node_mapping = {}
         self.univ_client = univ_client#()
-        self.root = tree_node(self, item_id)
-        
+        self.root = tree_node(self, item_id, quantity)
+        self.quantity=quantity
 
     def make_node_id(self, caller):
         key = f"node_{str(self.node_count)}"
@@ -24,8 +35,10 @@ class tree_container:
         pass
 
     def get_serialized_nodes(self):
-        # print(self.root.to_dict())
         return self.root.to_dict()
+    
+    def render_tree(self):
+        pass
 
 class abstract_node():
 
@@ -47,7 +60,8 @@ class spacer_node(abstract_node):
                  tree_container, 
                  listings=None, 
                  ingredients=None,
-                 item_id=None):
+                 item_id=None,
+                 quantity=None):
         
         self.tree_container=tree_container
         self.value = tree_container.make_node_id(self)
@@ -65,6 +79,7 @@ class spacer_node(abstract_node):
             )
 
         if ingredients is not None:
+            self.quantity = quantity
             self.ingredients = self._process_ingredients(ingredients)
             self.json = (
                 {
@@ -75,11 +90,11 @@ class spacer_node(abstract_node):
                 }
             )
 
-    def _process_ingredients(self,ingredients):
-        print(ingredients)
-        return [tree_node(self.tree_container, item["id"], item["amount"]) for item in ingredients]
+    def _process_ingredients(self, ingredients):
+        # print(ingredients)
+        return [tree_node(self.tree_container, item["id"], item["amount"]*self.quantity) for item in ingredients]
 
-    def _process_price_query(self,results): 
+    def _process_price_query(self, results): 
         return [listing_node(self.tree_container, listing, self.item_id) for listing in results]
 
     def to_dict(self):
@@ -91,7 +106,7 @@ class listing_node(abstract_node):
         self.tree_container=tree_container
         self.item_id = item_id
         self.value = self.tree_container.make_node_id(self)
-        self.listing=listing
+        self.listing = listing
         self.label = self._make_label()
 
     def _make_label(self):
@@ -117,8 +132,9 @@ class tree_node(abstract_node):
     def __init__(self, tree_container, item_id, quantity=1):
         self.item_id = item_id
         self.tree_container = tree_container
+        self.quantity = quantity
         self.value = self.tree_container.make_node_id(self)
-        self.label = item_lookup[str(item_id)]["en"]
+        self.label = f'{item_lookup[str(item_id)]["en"]} (required: {quantity})' #[required: x (x per craft) | prod yield: x | selected: x]
 
         reci_dict = recipe_dict(item_id)
         if reci_dict is not None:
@@ -126,15 +142,13 @@ class tree_node(abstract_node):
             self.ingredients = self._process_ingredients(reci_dict["ingredients"])
         else: 
             self.ingredients = []
-        self.quantity = quantity
 
-        
         self.checked = False
         listings = self.tree_container.price_query(item_id)
         self.listings = self._process_price_query(listings)
 
     def _process_ingredients(self,ingredients):
-        return spacer_node(self.tree_container, ingredients=ingredients)
+        return spacer_node(self.tree_container, ingredients=ingredients, quantity=self.quantity)
 
     def _process_price_query(self,listings): 
         return spacer_node(self.tree_container, listings=listings, item_id=self.item_id)
@@ -144,7 +158,7 @@ class tree_node(abstract_node):
         retval = {
                 "label":self.label,
                 "value":self.value,
-                "showCheckbox":True,
+                "showCheckbox":False, #True, revert when functionality added
                 "children":[self.listings.to_dict()]
             }
         
@@ -152,6 +166,6 @@ class tree_node(abstract_node):
             # print("\ningredients",self.ingredients.to_dict(),"\n")
             retval["children"]=[self.listings.to_dict(),self.ingredients.to_dict()]
         
-        print(retval["children"])
+        # print(retval["children"])
         return retval
 

@@ -64,10 +64,11 @@ class univ_client:
         if response.status_code == 200:
             return response.json()
         else:
-            print(response)
+            pass
+            # print(response)
             #maybe reenque?
 
-    def price_query(self, item_id):
+    def price_query(self, item_id, filter_args=None):
     
         if item_id in self.cache:
             results = self.cache[item_id]

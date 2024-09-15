@@ -28,38 +28,46 @@ univ_client = get_univ_client()
 #                          for x in recipe_lookup["recipes"].keys()}
     
 #     return item_lookup, reverse_item_lookup, recipe_lookup, reverse_recipe_lookup, 
-univ_client = get_univ_client()
+# univ_client = get_univ_client()
 
 # item_lookup, reverse_item_lookup, recipe_lookup, reverse_recipe_lookup, univ_client = load_resources()
 
 options_list = [x for x in reverse_item_lookup.keys() 
                 if int(reverse_item_lookup[x]) in reverse_recipe_lookup.keys()]
 
-def full_recipe_dict(search_term):
+def full_recipe_dict(search_term, quantity=1):
     search_term=search_term#.lower()
     itemID = reverse_item_lookup[search_term]
     if not int(itemID) in reverse_recipe_lookup:
         return None
-    return tree_container(itemID, univ_client)
+    return tree_container(itemID, univ_client, quantity)
 
 shopping_list=""
 totals = 0
 
 
-with st.form(key='my_form'):
+with st.form(key="settings"):
+    item = st.selectbox("Home Server", ["Faerie","Sargatanas"], None)
+    show_region = st.checkbox("Show cross DC results", True)
+    show_home = st.checkbox("Always show some results from home server", True)
+    submit_button = st.form_submit_button(label='Save Settings')
+
+with st.form(key='tree_opti'):
     item = st.selectbox("Search for Item", options_list, None)
-    submit_button = st.form_submit_button(label='Submit')
+    quantity = st.number_input("Desired Quantity", 1, 99, step=1)
+    hq = st.checkbox("Allow NQ")
+    submit_button = st.form_submit_button(label='Optimize')
     if item is not None:
 
-        reci = full_recipe_dict(item)
+        reci = full_recipe_dict(item, quantity)
         # ctr = counter()
         nodes = reci.get_serialized_nodes()
         # print(nodes)
         # print(nodes)
 
+
 if item is not None:        
     return_select = tree_select([nodes], 
-                                # show_expand_all=True, #hardcode later
                                 checked = [0],
                                 expanded = list(reci.node_mapping.keys()), #gather all beforehand
                                 expand_disabled=False,
@@ -67,7 +75,7 @@ if item is not None:
                                 )
     print("update")
     # try:
-    if return_select["checked"] != [0]:
+    if len(return_select["checked"]) > 0 and return_select["checked"] != [0]:
         en = "en" #fix later
         shopping_list = "".join([f"{(item_lookup[str(reci.node_mapping[x].item_id)])[en]} \n -{reci.node_mapping[x].label}\n" for x in return_select["checked"]])
         print(return_select["checked"])  
@@ -79,26 +87,26 @@ with st.sidebar:
     st.text_area(label=" ", value=shopping_list, height = 600)
     st.text_area(label=" ", value=totals, height = 100)
 
-#move later
-def recipe_dict(itemID):
-    retval = {"id":itemID, "text":item_lookup[str(itemID)]["en"]}
-    if not int(itemID) in reverse_recipe_lookup:
-        return None
-    recipe = reverse_recipe_lookup [int(itemID)]
-    if "yields" in recipe:
-        retval["yields"] = recipe["yields"]
-    ingredients = []
-    for x in recipe["ingredients"]:
-        ingredient = {}
-        ingredient["id"] = x["id"]
-        ingredient["text"] = item_lookup[str(x["id"])]["en"]
-        ingredient["amount"] = x["amount"]
-        recurs = _recipe_dict(x["id"])
-        if recurs is not None:
-            if "yields" in recurs:
-                ingredient["yields"] = recurs["yields"]
-            ingredient["ingredients"] = recurs["ingredients"]
-        ingredients.append(ingredient)
-    retval["ingredients"] = ingredients
-    return retval
+# #move later
+# def recipe_dict(itemID):
+#     retval = {"id":itemID, "text":item_lookup[str(itemID)]["en"]}
+#     if not int(itemID) in reverse_recipe_lookup:
+#         return None
+#     recipe = reverse_recipe_lookup [int(itemID)]
+#     if "yields" in recipe:
+#         retval["yields"] = recipe["yields"]
+#     ingredients = []
+#     for x in recipe["ingredients"]:
+#         ingredient = {}
+#         ingredient["id"] = x["id"]
+#         ingredient["text"] = item_lookup[str(x["id"])]["en"]
+#         ingredient["amount"] = x["amount"]
+#         recurs = _recipe_dict(x["id"])
+#         if recurs is not None:
+#             if "yields" in recurs:
+#                 ingredient["yields"] = recurs["yields"]
+#             ingredient["ingredients"] = recurs["ingredients"]
+#         ingredients.append(ingredient)
+#     retval["ingredients"] = ingredients
+#     return retval
 
