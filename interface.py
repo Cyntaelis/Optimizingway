@@ -1,5 +1,12 @@
 import streamlit as st
 
+@st.cache_resource
+def fix_import_night_mode():
+    import os
+    import subprocess
+    subprocess.check_call(["pip", "install", "git+https://github.com/wenyuzhao/streamlit_tree_select.git"])
+fix_import_night_mode()
+
 from streamlit_tree_select import tree_select
 #home server -dropdown? or home region
 from univ_tools import univ_client
